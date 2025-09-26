@@ -3,6 +3,7 @@ from packages.views import PackageList
 from sms.views import SmsSubscriptionList
 from performance.views import PerformanceMetrics
 from mikrotik.views import add_user
+from .views import RegisterView, LoginView, LogoutView, UserMe, ActiveUsers, TokenObtainPair, TokenRefresh
 from . import views
 
 

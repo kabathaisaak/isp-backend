@@ -1,12 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.contrib.auth import authenticate, login 
-from django.contrib.auth import get_user_model
-User = get_user_model()
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.contrib.auth import authenticate, login, logout, get_user_model
+
+from .serializers import UserSerializer
+
+User = get_user_model()
+
 
 class UserMe(APIView):
     permission_classes = [IsAuthenticated]
@@ -14,6 +18,7 @@ class UserMe(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
 
 class ActiveUsers(APIView):
     permission_classes = [IsAuthenticated]
@@ -23,15 +28,16 @@ class ActiveUsers(APIView):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
+
 class TokenObtainPair(TokenObtainPairView):
     # Custom logic can be added here if needed
     pass
+
 
 class TokenRefresh(TokenRefreshView):
     # Custom logic can be added here if needed
     pass
 
-from rest_framework import status
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -62,6 +68,7 @@ class RegisterView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -77,10 +84,20 @@ class LoginView(APIView):
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            login(request, user)  # ✅ sets the session cookie
+            # create JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            # also create session (optional)
+            login(request, user)
+
             serializer = UserSerializer(user)
             return Response(
-                {"message": "Login successful", "user": serializer.data},
+                {
+                    "message": "Login successful",
+                    "user": serializer.data,
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
                 status=status.HTTP_200_OK
             )
 
@@ -88,6 +105,7 @@ class LoginView(APIView):
             {"error": "Invalid credentials"},
             status=status.HTTP_401_UNAUTHORIZED
         )
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

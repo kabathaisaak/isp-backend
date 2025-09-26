@@ -9,5 +9,6 @@ urlpatterns = [
     path('api/packages/', include('packages.urls')),
     path('api/performance/', include('performance.urls')),
     path('api/users/', include('users.urls')),
+    path('api/hotspot-plans/', include('packages.urls')), 
 
 ]
